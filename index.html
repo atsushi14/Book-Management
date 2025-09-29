@@ -10,14 +10,13 @@
     <label>氏名: <input id="name" required></label><br><br>
     <label>本のタイトル: <input id="bookTitle" required></label><br><br>
     <label>貸出日: <input type="date" id="lendDate" required></label><br><br>
-    <label>LINEユーザーID: <input id="lineUserId" required></label><br><br>
     <button type="submit">登録</button>
   </form>
 
   <div id="message" style="margin-top:12px; font-weight:bold;"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyOiYYLLvpxIZQMn80pcJZuEzY1yeLJC_s3KJ5zaMkaka_2xgDRpXJ_lBEh9vBIWzrA0Q/exec"; // ← ここを置換
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyoGE6UKoHCOE9KssjJT7OfFwzvFCAOD8vHqlFTxqK-kUkm4KqLkmkNcQGdgRdJhzxSbA/exec"; // ← ここを置換
 
     document.getElementById('lendForm').addEventListener('submit', function(e){
       e.preventDefault();
@@ -27,7 +26,6 @@
       params.append('name', document.getElementById('name').value);
       params.append('bookTitle', document.getElementById('bookTitle').value);
       params.append('lendDate', document.getElementById('lendDate').value);
-      params.append('lineUserId', document.getElementById('lineUserId').value);
 
       fetch(GAS_URL, {
         method: 'POST',
