@@ -8,7 +8,6 @@
   <h2>図書貸出フォーム</h2>
   <form id="lendForm">
     <label>出席番号(4桁): <input id="studentId" pattern="\d{4}" required></label><br><br>
-    <label>氏名: <input id="name" readonly></label><br><br>
     <label>本のタイトル: <input id="bookTitle" required></label><br><br>
     <label>貸出日: <input type="date" id="lendDate" required></label><br><br>
     <button type="submit">登録</button>
@@ -39,21 +38,6 @@
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwVoDmuZAiGwkJ5xCJ0YWWanlBmqhEiJbjgqSGVwDcXo1RCbiC7n8zUDQeompjJg6rPlw/exec";
-
-    // 出席番号入力で氏名自動取得
-    document.getElementById("studentId").addEventListener("input", function() {
-      const id = this.value.trim();
-      if(id.length === 4){
-        fetch(GAS_URL + "?action=getName&id=" + encodeURIComponent(id))
-          .then(res => res.json())
-          .then(data => {
-            document.getElementById("name").value = data.result === "success" ? data.name : "";
-          })
-          .catch(err => console.error(err));
-      } else {
-        document.getElementById("name").value = "";
-      }
-    });
 
     // 登録済みデータ取得
     function loadData() {
@@ -94,7 +78,6 @@
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             document.getElementById('lendForm').reset();
-            document.getElementById('name').value = "";
             loadData();
           } else {
             document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || "");
