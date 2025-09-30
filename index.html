@@ -26,57 +26,59 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyoGE6UKoHCOE9KssjJT7OfFwzvFCAOD8vHqlFTxqK-kUkm4KqLkmkNcQGdgRdJhzxSbA/exec"; // ← あなたのGAS URL
 
+    // --- 登録処理 ---
     document.getElementById('lendForm').addEventListener('submit', function(e){
       e.preventDefault();
       document.getElementById('message').innerText = "送信中...";
 
       const params = new URLSearchParams();
-      const name = document.getElementById('name').value;
-      const bookTitle = document.getElementById('bookTitle').value;
-      const lendDate = document.getElementById('lendDate').value;
+      params.append('name', document.getElementById('name').value);
+      params.append('bookTitle', document.getElementById('bookTitle').value);
+      params.append('lendDate', document.getElementById('lendDate').value);
 
-      params.append('name', name);
-      params.append('bookTitle', bookTitle);
-      params.append('lendDate', lendDate);
-
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: params
-      })
-      .then(res => res.text())
-      .then(text => {
-        let ok = false;
-        try {
-          const j = JSON.parse(text);
+      fetch(GAS_URL, { method: 'POST', body: params })
+        .then(res => res.json())
+        .then(j => {
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
-            ok = true;
-
-            // 返却日を計算して表示用に追加
-            const d = new Date(lendDate);
-            d.setDate(d.getDate() + 14);
-            const returnDate = d.toISOString().split('T')[0]; // yyyy-mm-dd
-
-            const list = document.getElementById('bookList');
-            const div = document.createElement('div');
-            div.className = "book-item";
-            div.textContent = `${name} さん - 『${bookTitle}』 (貸出日: ${lendDate}, 返却日: ${returnDate})`;
-            list.prepend(div); // 上に追加
-
             document.getElementById('lendForm').reset();
+            loadBookList(); // 再読み込み
           } else {
-            document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || text);
+            document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || '');
           }
-        } catch (err) {
-          document.getElementById('message').innerText = text;
-        }
-        if (!ok) console.log('response text:', text);
-      })
-      .catch(err => {
-        console.error('fetch error:', err);
-        document.getElementById('message').innerText = '❌ 通信エラーが発生しました。詳細はコンソールを確認してください。';
-      });
+        })
+        .catch(err => {
+          console.error('fetch error:', err);
+          document.getElementById('message').innerText = '❌ 通信エラー';
+        });
     });
+
+    // --- 一覧読み込み処理 ---
+    function loadBookList(){
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(j => {
+          const list = document.getElementById('bookList');
+          list.innerHTML = "";
+          if (j.result === 'success') {
+            j.data.reverse().forEach(row => {
+              const div = document.createElement('div');
+              div.className = "book-item";
+              div.textContent = `${row.name} さん - 『${row.bookTitle}』 (貸出日: ${row.lendDate}, 返却日: ${row.returnDate})`;
+              list.appendChild(div);
+            });
+          } else {
+            list.innerHTML = "❌ データ取得エラー";
+          }
+        })
+        .catch(err => {
+          console.error('fetch error:', err);
+          document.getElementById('bookList').innerText = "❌ 通信エラー";
+        });
+    }
+
+    // ページ読み込み時に一覧を取得
+    window.onload = loadBookList;
   </script>
 </body>
 </html>
