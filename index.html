@@ -7,7 +7,8 @@
 <body>
   <h2>図書貸出フォーム</h2>
   <form id="lendForm">
-    <label>氏名: <input id="name" required></label><br><br>
+    <label>出席番号(4桁): <input id="studentId" pattern="\d{4}" required></label><br><br>
+    <label>氏名: <input id="name" readonly></label><br><br>
     <label>本のタイトル: <input id="bookTitle" required></label><br><br>
     <label>貸出日: <input type="date" id="lendDate" required></label><br><br>
     <button type="submit">登録</button>
@@ -18,51 +19,63 @@
   <h3>📚 登録済みリスト</h3>
   <table border="1" cellpadding="6" id="list">
     <thead>
-      <tr><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
+      <tr><th>出席番号</th><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <h3>🔍 名前で検索</h3>
-  <form id="searchForm">
-    <label>氏名: <input id="searchName" required></label>
+  <h3>🔍 出席番号で検索</h3>
+  <form id="searchIdForm">
+    <label>出席番号(4桁): <input id="searchId" pattern="\d{4}" required></label>
     <button type="submit">検索</button>
   </form>
 
-  <table border="1" cellpadding="6" id="searchResult">
+  <table border="1" cellpadding="6" id="searchResultId">
     <thead>
-      <tr><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
+      <tr><th>出席番号</th><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbygohmXMzHu_Z5aqtcCPh7UsUw02-pP4XyoIdgs85b8KRF4OQ-i7JWlelnlQWKx39qk1g/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwVoDmuZAiGwkJ5xCJ0YWWanlBmqhEiJbjgqSGVwDcXo1RCbiC7n8zUDQeompjJg6rPlw/exec";
 
-    // データ取得して表に表示
+    // 出席番号入力で氏名自動取得
+    document.getElementById("studentId").addEventListener("input", function() {
+      const id = this.value.trim();
+      if(id.length === 4){
+        fetch(GAS_URL + "?action=getName&id=" + encodeURIComponent(id))
+          .then(res => res.json())
+          .then(data => {
+            document.getElementById("name").value = data.result === "success" ? data.name : "";
+          })
+          .catch(err => console.error(err));
+      } else {
+        document.getElementById("name").value = "";
+      }
+    });
+
+    // 登録済みデータ取得
     function loadData() {
       fetch(GAS_URL + "?action=read")
         .then(res => res.json())
         .then(data => {
+          const tbody = document.querySelector("#list tbody");
+          tbody.innerHTML = "";
           if (data.result === "success") {
-            const tbody = document.querySelector("#list tbody");
-            tbody.innerHTML = "";
             data.records.forEach(r => {
               const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
+              tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
               tbody.appendChild(tr);
             });
           } else {
             document.getElementById("message").innerText = "❌ データ取得エラー: " + data.message;
           }
-        })
-        .catch(err => {
+        }).catch(err => {
           console.error(err);
           document.getElementById("message").innerText = "❌ 通信エラー";
         });
     }
-
-    // 初期表示時に呼び出し
     loadData();
 
     // 登録処理
@@ -71,61 +84,47 @@
       document.getElementById('message').innerText = "送信中...";
 
       const params = new URLSearchParams();
-      params.append('name', document.getElementById('name').value);
+      params.append('studentId', document.getElementById('studentId').value);
       params.append('bookTitle', document.getElementById('bookTitle').value);
       params.append('lendDate', document.getElementById('lendDate').value);
 
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: params
-      })
-      .then(res => res.text())
-      .then(text => {
-        try {
-          const j = JSON.parse(text);
+      fetch(GAS_URL, { method: 'POST', body: params })
+        .then(res => res.json())
+        .then(j => {
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             document.getElementById('lendForm').reset();
-            loadData(); // ← 登録後に一覧をリロード
+            document.getElementById('name').value = "";
+            loadData();
           } else {
-            document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || text);
+            document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || "");
           }
-        } catch (err) {
-          document.getElementById('message').innerText = text;
-        }
-      })
-      .catch(err => {
-        console.error('fetch error:', err);
-        document.getElementById('message').innerText = '❌ 通信エラーが発生しました。';
-      });
+        }).catch(err => {
+          console.error('fetch error:', err);
+          document.getElementById('message').innerText = '❌ 通信エラーが発生しました。';
+        });
     });
 
-    // 名前検索処理
-    document.getElementById('searchForm').addEventListener('submit', function(e){
+    // 出席番号検索
+    document.getElementById('searchIdForm').addEventListener('submit', function(e){
       e.preventDefault();
-      const name = document.getElementById('searchName').value;
-
-      fetch(GAS_URL + "?action=search&name=" + encodeURIComponent(name))
+      const id = document.getElementById('searchId').value.trim();
+      fetch(GAS_URL + "?action=searchById&id=" + encodeURIComponent(id))
         .then(res => res.json())
         .then(data => {
-          const tbody = document.querySelector("#searchResult tbody");
+          const tbody = document.querySelector("#searchResultId tbody");
           tbody.innerHTML = "";
           if (data.result === "success") {
             data.records.forEach(r => {
               const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
+              tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
               tbody.appendChild(tr);
             });
           } else {
-            tbody.innerHTML = `<tr><td colspan="4">❌ ${data.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5">❌ ${data.message}</td></tr>`;
           }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("❌ 通信エラー");
-        });
+        }).catch(err => { console.error(err); alert("❌ 通信エラー"); });
     });
   </script>
 </body>
 </html>
-
