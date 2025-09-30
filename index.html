@@ -18,13 +18,26 @@
   <h3>📚 登録済みリスト</h3>
   <table border="1" cellpadding="6" id="list">
     <thead>
-      <tr><th>氏名</th><th>本のタイトル</th><th>貸出日</th></tr>
+      <tr><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>🔍 名前で検索</h3>
+  <form id="searchForm">
+    <label>氏名: <input id="searchName" required></label>
+    <button type="submit">検索</button>
+  </form>
+
+  <table border="1" cellpadding="6" id="searchResult">
+    <thead>
+      <tr><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxNpomhgBxxtxOuvI1cY48aY8jd614ndDxI1UNMqFC-YylM89ygNcJjJtk7jA2rmXLqQA/exec"; // ← あなたのURL
+    const GAS_URL = "★★★ あなたのデプロイURLに置き換え ★★★";
 
     // データ取得して表に表示
     function loadData() {
@@ -36,7 +49,7 @@
             tbody.innerHTML = "";
             data.records.forEach(r => {
               const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td>`;
+              tr.innerHTML = `<td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
               tbody.appendChild(tr);
             });
           } else {
@@ -86,7 +99,32 @@
         document.getElementById('message').innerText = '❌ 通信エラーが発生しました。';
       });
     });
+
+    // 名前検索処理
+    document.getElementById('searchForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const name = document.getElementById('searchName').value;
+
+      fetch(GAS_URL + "?action=search&name=" + encodeURIComponent(name))
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector("#searchResult tbody");
+          tbody.innerHTML = "";
+          if (data.result === "success") {
+            data.records.forEach(r => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `<td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
+              tbody.appendChild(tr);
+            });
+          } else {
+            tbody.innerHTML = `<tr><td colspan="4">❌ ${data.message}</td></tr>`;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("❌ 通信エラー");
+        });
+    });
   </script>
 </body>
 </html>
-
