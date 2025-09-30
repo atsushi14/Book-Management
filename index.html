@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <title>図書貸出フォーム</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; }
+  #bookList { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+  .book-item { margin-bottom: 8px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; }
+</style>
 </head>
 <body>
   <h2>図書貸出フォーム</h2>
@@ -15,37 +20,54 @@
 
   <div id="message" style="margin-top:12px; font-weight:bold;"></div>
 
+  <h3>📚 登録済みの貸出一覧</h3>
+  <div id="bookList"></div>
+
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyoGE6UKoHCOE9KssjJT7OfFwzvFCAOD8vHqlFTxqK-kUkm4KqLkmkNcQGdgRdJhzxSbA/exec"; // ← ここを置換
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyoGE6UKoHCOE9KssjJT7OfFwzvFCAOD8vHqlFTxqK-kUkm4KqLkmkNcQGdgRdJhzxSbA/exec"; // ← あなたのGAS URL
 
     document.getElementById('lendForm').addEventListener('submit', function(e){
       e.preventDefault();
       document.getElementById('message').innerText = "送信中...";
 
       const params = new URLSearchParams();
-      params.append('name', document.getElementById('name').value);
-      params.append('bookTitle', document.getElementById('bookTitle').value);
-      params.append('lendDate', document.getElementById('lendDate').value);
+      const name = document.getElementById('name').value;
+      const bookTitle = document.getElementById('bookTitle').value;
+      const lendDate = document.getElementById('lendDate').value;
+
+      params.append('name', name);
+      params.append('bookTitle', bookTitle);
+      params.append('lendDate', lendDate);
 
       fetch(GAS_URL, {
         method: 'POST',
-        body: params // ヘッダーは自分で設定しない（preflight を発生させないため）
+        body: params
       })
       .then(res => res.text())
       .then(text => {
-        // サーバが JSON を返すようにしてあるのでパースを試みる
         let ok = false;
         try {
           const j = JSON.parse(text);
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             ok = true;
+
+            // 返却日を計算して表示用に追加
+            const d = new Date(lendDate);
+            d.setDate(d.getDate() + 14);
+            const returnDate = d.toISOString().split('T')[0]; // yyyy-mm-dd
+
+            const list = document.getElementById('bookList');
+            const div = document.createElement('div');
+            div.className = "book-item";
+            div.textContent = `${name} さん - 『${bookTitle}』 (貸出日: ${lendDate}, 返却日: ${returnDate})`;
+            list.prepend(div); // 上に追加
+
             document.getElementById('lendForm').reset();
           } else {
             document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || text);
           }
         } catch (err) {
-          // JSONでない場合はそのまま表示
           document.getElementById('message').innerText = text;
         }
         if (!ok) console.log('response text:', text);
