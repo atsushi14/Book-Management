@@ -9,11 +9,14 @@
   <form id="lendForm">
     <label>出席番号(4桁): <input id="studentId" pattern="\d{4}" required></label><br><br>
     <label>本のタイトル: <input id="bookTitle" required></label><br><br>
-    <label>貸出日: <input type="date" id="lendDate" required></label><br><br>
+    <!-- 貸出日は入力させない -->
     <button type="submit">登録</button>
   </form>
 
   <div id="message" style="margin-top:12px; font-weight:bold;"></div>
+
+  <!-- 🔹 返却予定日の案内 -->
+  <div id="returnNotice" style="margin-top:12px; font-weight:bold; color:green;"></div>
 
   <h3>🔍 出席番号で検索</h3>
   <form id="searchIdForm">
@@ -32,7 +35,23 @@
   </table>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwVoDmuZAiGwkJ5xCJ0YWWanlBmqhEiJbjgqSGVwDcXo1RCbiC7n8zUDQeompjJg6rPlw/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw8TVLXoCk4n_GBeUi1HssQ3xhO7WHnLYDlqRG-NHaQ6STLiQTXSn0IHhSBetcsRBmbBw/exec";
+
+    // 🔹 ページ読み込み時に返却予定日を表示
+    function showReturnNotice() {
+      const today = new Date();
+      const returnDate = new Date(today);
+      returnDate.setDate(returnDate.getDate() + 14);
+
+      const yyyy = returnDate.getFullYear();
+      const mm = String(returnDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(returnDate.getDate()).padStart(2, '0');
+      const returnStr = `${yyyy}/${mm}/${dd}`;
+
+      document.getElementById('returnNotice').innerText = 
+        `📘 返却は ${returnStr} です。`;
+    }
+    showReturnNotice();
 
     // 登録処理
     document.getElementById('lendForm').addEventListener('submit', function(e){
@@ -42,7 +61,6 @@
       const params = new URLSearchParams();
       params.append('studentId', document.getElementById('studentId').value);
       params.append('bookTitle', document.getElementById('bookTitle').value);
-      params.append('lendDate', document.getElementById('lendDate').value);
 
       fetch(GAS_URL, { method: 'POST', body: params })
         .then(res => res.json())
@@ -50,6 +68,7 @@
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             document.getElementById('lendForm').reset();
+            showReturnNotice(); // 再表示
           } else {
             document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || "");
           }
