@@ -15,19 +15,14 @@
 
   <div id="message" style="margin-top:12px; font-weight:bold;"></div>
 
-  <h3>📚 登録済みリスト</h3>
-  <table border="1" cellpadding="6" id="list">
-    <thead>
-      <tr><th>出席番号</th><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
   <h3>🔍 出席番号で検索</h3>
   <form id="searchIdForm">
     <label>出席番号(4桁): <input id="searchId" pattern="\d{4}" required></label>
     <button type="submit">検索</button>
   </form>
+
+  <!-- 🔹 検索中や結果メッセージ表示用 -->
+  <div id="searchMessage" style="margin-top:8px; font-weight:bold; color:blue;"></div>
 
   <table border="1" cellpadding="6" id="searchResultId">
     <thead>
@@ -38,29 +33,6 @@
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwVoDmuZAiGwkJ5xCJ0YWWanlBmqhEiJbjgqSGVwDcXo1RCbiC7n8zUDQeompjJg6rPlw/exec";
-
-    // 登録済みデータ取得
-    function loadData() {
-      fetch(GAS_URL + "?action=read")
-        .then(res => res.json())
-        .then(data => {
-          const tbody = document.querySelector("#list tbody");
-          tbody.innerHTML = "";
-          if (data.result === "success") {
-            data.records.forEach(r => {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
-              tbody.appendChild(tr);
-            });
-          } else {
-            document.getElementById("message").innerText = "❌ データ取得エラー: " + data.message;
-          }
-        }).catch(err => {
-          console.error(err);
-          document.getElementById("message").innerText = "❌ 通信エラー";
-        });
-    }
-    loadData();
 
     // 登録処理
     document.getElementById('lendForm').addEventListener('submit', function(e){
@@ -78,7 +50,6 @@
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             document.getElementById('lendForm').reset();
-            loadData();
           } else {
             document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || "");
           }
@@ -92,21 +63,34 @@
     document.getElementById('searchIdForm').addEventListener('submit', function(e){
       e.preventDefault();
       const id = document.getElementById('searchId').value.trim();
+
+      // 🔹 検索中表示
+      document.getElementById('searchMessage').innerText = "検索中...";
+
       fetch(GAS_URL + "?action=searchById&id=" + encodeURIComponent(id))
         .then(res => res.json())
         .then(data => {
           const tbody = document.querySelector("#searchResultId tbody");
           tbody.innerHTML = "";
           if (data.result === "success") {
-            data.records.forEach(r => {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
-              tbody.appendChild(tr);
-            });
+            if (data.records.length > 0) {
+              data.records.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
+                tbody.appendChild(tr);
+              });
+              document.getElementById('searchMessage').innerText = "✅ 検索完了";
+            } else {
+              document.getElementById('searchMessage').innerText = "⚠️ 該当データはありません";
+            }
           } else {
-            tbody.innerHTML = `<tr><td colspan="5">❌ ${data.message}</td></tr>`;
+            document.getElementById('searchMessage').innerText = "❌ " + data.message;
           }
-        }).catch(err => { console.error(err); alert("❌ 通信エラー"); });
+        })
+        .catch(err => { 
+          console.error(err); 
+          document.getElementById('searchMessage').innerText = "❌ 通信エラー"; 
+        });
     });
   </script>
 </body>
