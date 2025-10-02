@@ -2,14 +2,67 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"> <!-- 追加 -->
 <title>図書貸出フォーム</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 16px;
+    line-height: 1.5;
+  }
+  form {
+    margin-bottom: 20px;
+  }
+  input, button {
+    padding: 8px;
+    font-size: 1rem;
+    margin-top: 6px;
+    width: 100%; /* スマホで幅いっぱい */
+    box-sizing: border-box;
+  }
+  label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #1565c0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: left;
+  }
+  th {
+    background: #f0f0f0;
+  }
+  /* スマホ対応：横スクロール */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+</style>
 </head>
 <body>
   <h2>図書貸出フォーム</h2>
   <form id="lendForm">
-    <label>出席番号(4桁): <input id="studentId" pattern="\d{4}" required></label><br><br>
-    <label>本のタイトル: <input id="bookTitle" required></label><br><br>
-    <!-- 貸出日は入力させない -->
+    <label>出席番号(4桁): 
+      <input id="studentId" pattern="\d{4}" required>
+    </label>
+    <label>本のタイトル: 
+      <input id="bookTitle" required>
+    </label>
     <button type="submit">登録</button>
   </form>
 
@@ -20,19 +73,29 @@
 
   <h3>🔍 出席番号で検索</h3>
   <form id="searchIdForm">
-    <label>出席番号(4桁): <input id="searchId" pattern="\d{4}" required></label>
+    <label>出席番号(4桁): 
+      <input id="searchId" pattern="\d{4}" required>
+    </label>
     <button type="submit">検索</button>
   </form>
 
   <!-- 🔹 検索中や結果メッセージ表示用 -->
   <div id="searchMessage" style="margin-top:8px; font-weight:bold; color:blue;"></div>
 
-  <table border="1" cellpadding="6" id="searchResultId">
-    <thead>
-      <tr><th>出席番号</th><th>氏名</th><th>本のタイトル</th><th>貸出日</th><th>返却日</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="table-wrapper">
+    <table id="searchResultId">
+      <thead>
+        <tr>
+          <th>出席番号</th>
+          <th>氏名</th>
+          <th>本のタイトル</th>
+          <th>貸出日</th>
+          <th>返却日</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbw8TVLXoCk4n_GBeUi1HssQ3xhO7WHnLYDlqRG-NHaQ6STLiQTXSn0IHhSBetcsRBmbBw/exec";
