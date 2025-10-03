@@ -2,117 +2,129 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"> <!-- 追加 -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>図書貸出フォーム</title>
 <style>
-  body {
-    font-family: sans-serif;
-    margin: 16px;
-    line-height: 1.5;
-  }
-  form {
-    margin-bottom: 20px;
-  }
+  body { font-family: sans-serif; margin: 16px; line-height: 1.6; }
+  form { margin-bottom: 16px; }
   input, button {
     padding: 8px;
-    font-size: 1rem;
-    margin-top: 6px;
-    width: 100%; /* スマホで幅いっぱい */
-    box-sizing: border-box;
-  }
-  label {
-    display: block;
-    margin-bottom: 10px;
+    font-size: 16px;
+    margin-top: 4px;
   }
   button {
-    background: #1976d2;
-    color: white;
-    border: none;
-    border-radius: 4px;
     cursor: pointer;
+    background: #007BFF;
+    border: none;
+    color: white;
+    border-radius: 4px;
   }
   button:hover {
-    background: #1565c0;
+    background: #0056b3;
   }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: 12px;
-    font-size: 0.9rem;
+  table { 
+    border-collapse: collapse; 
+    width: 100%; 
+    margin-top: 12px; 
+    font-size: 14px; 
   }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: left;
+  th, td { 
+    border: 1px solid #ccc; 
+    padding: 8px; 
+    text-align: center; 
   }
-  th {
-    background: #f0f0f0;
+  th { 
+    background: #f0f0f0; 
   }
-  /* スマホ対応：横スクロール */
-  .table-wrapper {
-    overflow-x: auto;
+
+  /* スマホ対応 */
+  @media (max-width: 600px) {
+    table, thead, tbody, th, td, tr { 
+      display: block; 
+      width: 100%; 
+    }
+    thead { display: none; } /* 項目見出しは消す */
+    tr { 
+      margin-bottom: 16px; 
+      border: 1px solid #ccc; 
+      border-radius: 6px; 
+      padding: 8px; 
+      background: #fafafa; 
+    }
+    td { 
+      text-align: left; 
+      padding: 6px 6px 6px 50%; 
+      position: relative; 
+      border: none; 
+      border-bottom: 1px solid #eee; 
+    }
+    td:last-child { border-bottom: none; }
+    td::before {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: 45%;
+      white-space: nowrap;
+      font-weight: bold;
+      color: #333;
+    }
+    td:nth-of-type(1)::before { content: "出席番号"; }
+    td:nth-of-type(2)::before { content: "氏名"; }
+    td:nth-of-type(3)::before { content: "本のタイトル"; }
+    td:nth-of-type(4)::before { content: "貸出日"; }
+    td:nth-of-type(5)::before { content: "返却日"; }
+    td:nth-of-type(6)::before { content: "返却済み"; }
+    input[type="checkbox"] {
+      transform: scale(1.3);
+      margin-left: 4px;
+    }
   }
 </style>
 </head>
 <body>
   <h2>図書貸出フォーム</h2>
   <form id="lendForm">
-    <label>出席番号(4桁): 
-      <input id="studentId" pattern="\d{4}" required>
-    </label>
-    <label>本のタイトル: 
-      <input id="bookTitle" required>
-    </label>
+    <label>出席番号(4桁):<br><input id="studentId" pattern="\d{4}" required style="width:100%;"></label><br><br>
+    <label>本のタイトル:<br><input id="bookTitle" required style="width:100%;"></label><br><br>
     <button type="submit">登録</button>
   </form>
 
   <div id="message" style="margin-top:12px; font-weight:bold;"></div>
-
-  <!-- 🔹 返却予定日の案内 -->
   <div id="returnNotice" style="margin-top:12px; font-weight:bold; color:green;"></div>
 
   <h3>🔍 出席番号で検索</h3>
   <form id="searchIdForm">
-    <label>出席番号(4桁): 
-      <input id="searchId" pattern="\d{4}" required>
-    </label>
+    <label>出席番号(4桁):<br><input id="searchId" pattern="\d{4}" required style="width:100%;"></label><br><br>
     <button type="submit">検索</button>
   </form>
 
-  <!-- 🔹 検索中や結果メッセージ表示用 -->
   <div id="searchMessage" style="margin-top:8px; font-weight:bold; color:blue;"></div>
 
-  <div class="table-wrapper">
-    <table id="searchResultId">
-      <thead>
-        <tr>
-          <th>出席番号</th>
-          <th>氏名</th>
-          <th>本のタイトル</th>
-          <th>貸出日</th>
-          <th>返却日</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="searchResultId">
+    <thead>
+      <tr>
+        <th>出席番号</th>
+        <th>氏名</th>
+        <th>本のタイトル</th>
+        <th>貸出日</th>
+        <th>返却日</th>
+        <th>返却済み</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw8TVLXoCk4n_GBeUi1HssQ3xhO7WHnLYDlqRG-NHaQ6STLiQTXSn0IHhSBetcsRBmbBw/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxr8cFw8oCrgI3lhjWgBcYPx2H0Q5mAXwKlxa6866fC2evOJ1V3ksi1_BvgqDP036DAIw/exec";
 
-    // 🔹 ページ読み込み時に返却予定日を表示
     function showReturnNotice() {
       const today = new Date();
       const returnDate = new Date(today);
       returnDate.setDate(returnDate.getDate() + 14);
-
       const yyyy = returnDate.getFullYear();
       const mm = String(returnDate.getMonth() + 1).padStart(2, '0');
       const dd = String(returnDate.getDate()).padStart(2, '0');
-      const returnStr = `${yyyy}/${mm}/${dd}`;
-
-      document.getElementById('returnNotice').innerText = 
-        `📘 返却は ${returnStr} です。`;
+      document.getElementById('returnNotice').innerText = `📘 返却は ${yyyy}/${mm}/${dd} です。`;
     }
     showReturnNotice();
 
@@ -120,7 +132,6 @@
     document.getElementById('lendForm').addEventListener('submit', function(e){
       e.preventDefault();
       document.getElementById('message').innerText = "送信中...";
-
       const params = new URLSearchParams();
       params.append('studentId', document.getElementById('studentId').value);
       params.append('bookTitle', document.getElementById('bookTitle').value);
@@ -131,7 +142,7 @@
           if (j.result === 'success') {
             document.getElementById('message').innerText = '✅ 登録しました！';
             document.getElementById('lendForm').reset();
-            showReturnNotice(); // 再表示
+            showReturnNotice();
           } else {
             document.getElementById('message').innerText = '❌ サーバエラー: ' + (j.message || "");
           }
@@ -141,14 +152,11 @@
         });
     });
 
-    // 出席番号検索
+    // 検索処理
     document.getElementById('searchIdForm').addEventListener('submit', function(e){
       e.preventDefault();
       const id = document.getElementById('searchId').value.trim();
-
-      // 🔹 検索中表示
       document.getElementById('searchMessage').innerText = "検索中...";
-
       fetch(GAS_URL + "?action=searchById&id=" + encodeURIComponent(id))
         .then(res => res.json())
         .then(data => {
@@ -158,8 +166,43 @@
             if (data.records.length > 0) {
               data.records.forEach(r => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${r.studentId}</td><td>${r.name}</td><td>${r.bookTitle}</td><td>${r.lendDate}</td><td>${r.returnDate}</td>`;
+                const checked = r.returned ? "checked" : "";
+                tr.innerHTML = `
+                  <td>${r.studentId}</td>
+                  <td>${r.name}</td>
+                  <td>${r.bookTitle}</td>
+                  <td>${r.lendDate}</td>
+                  <td>${r.returnDate}</td>
+                  <td><input type="checkbox" data-row="${r.rowIndex}" ${checked}></td>
+                `;
                 tbody.appendChild(tr);
+              });
+              // ✅ チェックボックスイベント
+              tbody.querySelectorAll("input[type=checkbox]").forEach(cb => {
+                cb.addEventListener("change", function() {
+                  const rowIndex = this.dataset.row;
+                  const returned = this.checked;
+                  fetch(GAS_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                      action: "returnBook",
+                      rowIndex: rowIndex,
+                      returned: returned
+                    })
+                  })
+                  .then(res => res.json())
+                  .then(j => {
+                    if (j.result === "success") {
+                      document.getElementById('searchMessage').innerText = "📘 状態を更新しました";
+                    } else {
+                      document.getElementById('searchMessage').innerText = "❌ 更新失敗: " + (j.message || "");
+                    }
+                  })
+                  .catch(err => {
+                    console.error(err);
+                    document.getElementById('searchMessage').innerText = "❌ 通信エラー";
+                  });
+                });
               });
               document.getElementById('searchMessage').innerText = "✅ 検索完了";
             } else {
